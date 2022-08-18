@@ -1,15 +1,21 @@
 package com.example.app;
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
+import android.widget.TextView;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.RecyclerView;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -113,46 +119,58 @@ public class MainActivity extends AppCompatActivity {
                 e.printStackTrace();
             }
 
-            ListAdapter adapter = new SimpleAdapter(MainActivity.this, starwars, R.layout.row_layout,
-                    new String[]{"name"},
-                    new int[]{R.id.textView});
-            boolean isTablet = findViewById(R.id.frameLayout) != null;
-            listView.setAdapter(adapter);
-            listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            class PeopleAdapter extends RecyclerView.Adapter<PeopleAdapter.ViewHolder> {
+                private ArrayList<HashMap<String, String>> starwars;
+                private LayoutInflater mLayoutInflater;
+
+                public PeopleAdapter(Context context, ArrayList<HashMap<String, String>> peopleList) {
+                    starwars = peopleList;
+                    mLayoutInflater = LayoutInflater.from(context);
+                }
+
                 @Override
-                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                    name = starwars.get(position).get("name");
-                    height = starwars.get(position).get("height");
-                    mass = starwars.get(position).get("mass");
-
-                    Bundle dataToPass = new Bundle();
-                    dataToPass.putString("name", name);
-                    dataToPass.putString("height", height);
-                    dataToPass.putString("mass", mass);
-
-
-                    if (isTablet) {
-                        DetailsFragment dFragment = new DetailsFragment(); //add a DetailFragment
-                        dFragment.setArguments(dataToPass); //pass it a bundle for information
-                        getSupportFragmentManager()
-                                .beginTransaction()
-                                .replace(R.id.frameLayout, dFragment) //Add the fragment in FrameLayout
-                                .commit(); //actually load the fragment.
-                    } else //isPhone
-                    {
-                        Intent nextActivity = new Intent(MainActivity.this, EmptyActivity.class);
-                        nextActivity.putExtras(dataToPass); //send data to next activity
-                        startActivity(nextActivity); //make the transition
-
-
-                    }
+                public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+                    View view = mLayoutInflater.inflate(R.layout.activity_main, parent, false);
+                    return new ViewHolder(view);
                 }
 
 
-            });
+                @Override
+                public void onBindViewHolder(ViewHolder holder, int position) {
+                    people = starwars.get(position);
+                    holder.textName.setText(people.getName());
+                    holder.textHeight.setText(people.getHeight());
+                    holder.textMass.setText(people.mass());
+                }
 
+                @Override
+                public int getItemCount() {
+                    return starwars.size();
+                }
+
+                public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
+                    private TextView textName;
+                    private TextView textHeight;
+                    private TextView textMass;
+
+                    public ViewHolder(View itemView) {
+                        super(itemView);
+                        textName = (TextView) itemView.findViewById(R.id.textName);
+                        textHeight = (TextView) itemView.findViewById(R.id.textHeight);
+                        textMass = (TextView) itemView.findViewById(R.id.textMass);
+                        itemView.setOnClickListener(this);
+                    }
+
+                    @Override
+                    public void onClick(View view) {
+                        People people = starwars.get(getAdapterPosition());
+                        DetailsFragment dFragment = new DetailsFragment();
+                        dFragment.GetData(people.getName(), people.getHeight(), people.getMass());
+                        dFragment.show(/*put the FragmentManager here*/, DetailsFragment.class.getSimpleName());
+                    }
+                }
+            }
         }
 
     }
 }
-
