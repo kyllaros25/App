@@ -1,5 +1,6 @@
 package com.example.app;
 
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.widget.ListView;
@@ -21,6 +22,10 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
     private ListView listView;
+    private String name;
+    private String height;
+    private String mass;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -48,15 +53,15 @@ public class MainActivity extends AppCompatActivity {
                 httpURLConnection.connect();
                 InputStream inputStream = httpURLConnection.getInputStream();
                 bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
-                StringBuffer stringBuffer= new StringBuffer();
-                String line="";
+                StringBuilder stringBuilder= new StringBuilder();
+                String line;
 
                 while ((line= bufferedReader.readLine())!= null){
 
-                    stringBuffer.append(line);
+                    stringBuilder.append(line);
 
                 }
-                FullJsonData =  stringBuffer.toString();
+                FullJsonData =  stringBuilder.toString();
                 List<JsonModel> jsonModelList = new ArrayList<>();
 
                 JSONObject jsonStartingObject = new JSONObject(FullJsonData);
@@ -98,9 +103,36 @@ public class MainActivity extends AppCompatActivity {
             super.onPostExecute(jsonModels);
             CustomAdapter adapter = new CustomAdapter(getApplicationContext(), jsonModels);
             listView.setAdapter(adapter);
+            boolean isTablet = findViewById(R.id.fragmentLocation) != null;
+            listView.setOnItemClickListener((list, item, position, id) -> {
+                name = jsonModels.get(position).getName();
+                height = jsonModels.get(position).getHeight();
+                mass = jsonModels.get(position).getMass();
 
+                Bundle dataToPass = new Bundle();
+                dataToPass.putString("name", name);
+                dataToPass.putString("name", height);
+                dataToPass.putString("mass", mass);
 
+                if(isTablet)
+                {
+                    DetailsFragment dFragment = new DetailsFragment(); //add a DetailFragment
+                    dFragment.setArguments(dataToPass); //pass it a bundle for information
+                    getSupportFragmentManager()
+                            .beginTransaction()
+                            .replace(R.id.fragmentLocation, dFragment) //Add the fragment in FrameLayout
+                            .commit(); //actually load the fragment.
+                }
+                else //isPhone
+                {
+                    Intent nextActivity = new Intent(MainActivity.this, EmptyActivity.class);
+                    nextActivity.putExtras(dataToPass); //send data to next activity
+                    startActivity(nextActivity); //make the transition
+                }
+            });
         }
     }
 
 }
+
+
